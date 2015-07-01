@@ -15,7 +15,7 @@ print(mode(authors$citations))
 # Define a useful function
 ##
 
-MakeGraphObject<-function(edgeList,minDegree=1, geneNames,geneCols, delete = .5) {
+MakeGraphObject<-function(edgeList,minDegree=1, geneNames,geneCols, delete = .5, dims=3) {
   
   #Set up some necessary params  
   #len<-length(unique(c(edgeList[,1], edgeList[,2])))
@@ -33,7 +33,7 @@ MakeGraphObject<-function(edgeList,minDegree=1, geneNames,geneCols, delete = .5)
   #simplify
   g<-simplify(g)
   #calcualte node layout
-  coord <- layout.fruchterman.reingold(g, dim = 3)
+  coord <- layout.fruchterman.reingold(g, dim = dims)
   #print(get.edge.attribute(g, "weight", index=E(g)))
   GL<-list("G"=g, "L"=coord,"C"=colors)
   return(GL)
@@ -41,31 +41,30 @@ MakeGraphObject<-function(edgeList,minDegree=1, geneNames,geneCols, delete = .5)
 
 function(input, output) {
   
-  # Take a dependency on input$goButton
+  #render some UI
+  #output$choose_dataset<-selectInput('select', 'trim to vertices connected to..', choices=unique(authors$name1,authors$name2),
+  #                                   selected=unique(authors$name1,authors$name2)[1])
   
   dataset <- reactive({
     authors[authors$citations >= input$minCitations,]
   })
-output$plot <- renderPlot({ 
-  input$goButton
-  names<-c(unique(c(as.character(dataset()$name1))))
-  print(dataset())
-  #print(names)
-  G<-MakeGraphObject(dataset(),minDegree=1,geneNames=names, geneCols="black",delete= .5)
   
-  #print(names)
-  #plotg(G)
-  rownames(G$L)<-names
-  e=get.edgelist(G$G,names=T)
-   #print(e)
-   X0=G$L[e[,1],1]
-   Y0=G$L[e[,1],2]
-   X1=G$L[e[,2],1]
-   Y1=G$L[e[,2],2]
-   plot(G$L, cex = 4, pch=16, col="red", type="n", axes=FALSE, xlab="", ylab="")
-   segments(X0,Y0,X1,Y1,lwd=get.edge.attribute(graph=G$G,name="weight", index=E(G$G))/(20/input$lwd),col=c("darkgrey","black",rainbow(50))[input$colE])
-   points(G$L, cex = 2, pch=16, col=rainbow(n=24)[input$col])
-   points(G$L, cex = 2, pch=1, col="black")
-   text(G$L, names, cex=input$textSize, col = "black")
-   	}, height=700)
+      output$plot <- renderPlot({ 
+        input$goButton
+        names<-c(unique(c(as.character(dataset()$name1))))
+  
+        G<-MakeGraphObject(dataset(),minDegree=1,geneNames=names, geneCols="black",delete= .5,dims=input$dims)
+        #are.connected(G$G, v1=input$select,v2="NULL")
+        rownames(G$L)<-names
+        e=get.edgelist(G$G,names=T)
+        X0=G$L[e[,1],1]
+        Y0=G$L[e[,1],2]
+        X1=G$L[e[,2],1]
+        Y1=G$L[e[,2],2]
+        plot(G$L, cex = 4, pch=16, col="red", type="n", axes=FALSE, xlab="", ylab="")
+        segments(X0,Y0,X1,Y1,lwd=get.edge.attribute(graph=G$G,name="weight", index=E(G$G))/(20/input$lwd),col=c("darkgrey","black",rainbow(50))[input$colE])
+        points(G$L, cex = 2, pch=16, col=alpha(rainbow(n=24)[input$col],input$trans))
+        points(G$L, cex = 2, pch=1, col="black")
+        text(G$L-input$off, names, cex=input$textSize, col = "black")
+   	  }, height=1000, width = 1000)
 }

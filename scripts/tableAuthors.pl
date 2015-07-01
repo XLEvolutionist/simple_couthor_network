@@ -53,14 +53,19 @@ while ( <BIB> ) {
 	chomp;
 	#remove all of the junk data we don't need
 	s/author = {//;
+	s/author=//g;
 	s/},//;
+	s/others//;
+	s/[{'\\}]//g;
+	s/"//;
+	#print $_ , "\n";
 	# seperate each author (they are seperated by "and")
-	my @authorslong = split / and /;
+	my @authorslong = split / and / , lc($_);
 	# now for each co-author get the first and last name
 	foreach ( @authorslong ) {
 		my ( $last, $first ) = split /,/;
 		#remove any lowercase characters
-		$first =~ s/[a-z]+//;
+		#$first =~ s/[a-z]+//;
 		$first =~ s/\.//g;
 		$first =~ s/\s+//g;
 		$last =~ s/\s+//g;
